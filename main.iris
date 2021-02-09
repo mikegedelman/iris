@@ -1,10 +1,18 @@
 
-print()
-print('hello')
-print('hello', 'arg2') # comment
+#print()
+#print('hello')
+#print('hello', 'arg2') # comment
+
+# x = 1
+# fn inc()
+#   x += 1
+#   "hi"
+# end
+# print(inc())
 
 fn say_hi()
-  print('hello')
+  let x = 2
+  return x
 end
 
-say_hi()
+print(say_hi())

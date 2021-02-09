@@ -1,10 +1,20 @@
-program = _{ SOI ~ expr* ~ EOI }
+program = _{ SOI ~ "\n"* ~ (stmt ~ "\n"+) * ~ stmt? ~ EOI }
 
-expr = {
+stmt = {
       funcDec
-      | fnCall
-      | literal
+      // | fnCall
+      | assignStmt
+      | returnStmt
+      | expr
 }
+expr = {
+      fnCall
+      | literal
+      | ident
+}
+
+assignStmt = { "let" ~ ident ~ "=" ~ expr }
+returnStmt = { "return" ~ expr }
 
 argsList = {expr ~ ("," ~ expr)* }
 fnCall = { ident ~ "(" ~ argsList? ~ ")" }
@@ -12,19 +22,21 @@ fnCall = { ident ~ "(" ~ argsList? ~ ")" }
 literal = _{ integer | decimal | string }
 
 // TODO support anonymous fn
-funcDecArgsList = {ident ~ ("," ~ ident)* }
-funcBody = { expr+ }
-funcDec = { "fn" ~ ident ~ "()" ~ funcBody ~ "end" }
+// funcDecArgsList = {ident ~ ("," ~ ident)* }
+funcBody = { (stmt ~ crlf?)* }
+funcDec = { "fn" ~ ident ~ "()" ~ crlf* ~ funcBody ~ crlf* ~ "end" }
 
 integer = @{ "_"? ~ ASCII_DIGIT+ }
 decimal = @{ "_"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
 
-ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+reserved_words = _{"fn" | "let" | "end"}
+ident = @{ !reserved_words ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
 /* TODO: support double quoted strings */
 string = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
 
-WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+crlf = _{ "\r" | "\n" }
+WHITESPACE = _{ " " | "\t" } // | "\r" | "\n" }
 
 // TODO: multiline comments
 COMMENT = _{ "#" ~ (!"\n" ~ ANY)* } // | ("/*" ~ ANY* ~ "*/") }
