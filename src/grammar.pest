@@ -8,10 +8,18 @@ stmt = {
       | expr
 }
 expr = {
+      arithmetic
+      | not_arithmetic
+}
+
+not_arithmetic = _{
       fnCall
       | literal
       | ident
 }
+
+infixOp = { "+" | "-" | "**" | "/" | "%" | "<<" | ">>" | "&" | "|" | "^" | "*" }
+arithmetic = { not_arithmetic ~ (infixOp ~ not_arithmetic)+ }
 
 assignStmt = { "let" ~ ident ~ "=" ~ expr }
 returnStmt = { "return" ~ expr }
@@ -22,14 +30,14 @@ fnCall = { ident ~ "(" ~ argsList? ~ ")" }
 literal = _{ integer | decimal | string }
 
 // TODO support anonymous fn
-// funcDecArgsList = {ident ~ ("," ~ ident)* }
+funcDecArgsList = {ident ~ ("," ~ ident)* }
 funcBody = { (stmt ~ crlf?)* }
-funcDec = { "fn" ~ ident ~ "()" ~ crlf* ~ funcBody ~ crlf* ~ "end" }
+funcDec = { "fn" ~ ident ~ "(" ~ funcDecArgsList? ~ ")" ~ crlf* ~ funcBody ~ crlf* ~ "end" }
 
 integer = @{ "_"? ~ ASCII_DIGIT+ }
 decimal = @{ "_"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
 
-reserved_words = _{"fn" | "let" | "end"}
+reserved_words = _{ "fn" | "let" | "end" | "+" | "-" | "*" | "/" | "%" | "<<" | ">>" | "&" | "|" | "^" | "**"}
 ident = @{ !reserved_words ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
 /* TODO: support double quoted strings */

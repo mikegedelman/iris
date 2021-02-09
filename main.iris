@@ -1,4 +1,4 @@
-
+print(10 - 2 + 1 * 3)
 #print()
 #print('hello')
 #print('hello', 'arg2') # comment
@@ -10,9 +10,22 @@
 # end
 # print(inc())
 
-fn say_hi()
-  let x = 2
-  return x
-end
 
-print(say_hi())
+# fn identity(x)
+#   return x
+# end
+# 
+# fn first(x, y)
+#   return x
+# end
+# 
+# fn add(a, b)
+#   return a + b
+# end
+# 
+# fn puts()
+#   let whoa = 10 - 2 + 1 * 3
+#   print(whoa)
+# end
+# 
+# puts()
