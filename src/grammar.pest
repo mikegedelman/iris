@@ -1,0 +1,30 @@
+program = _{ SOI ~ expr* ~ EOI }
+
+expr = {
+      funcDec
+      | fnCall
+      | literal
+}
+
+argsList = {expr ~ ("," ~ expr)* }
+fnCall = { ident ~ "(" ~ argsList? ~ ")" }
+
+literal = _{ integer | decimal | string }
+
+// TODO support anonymous fn
+funcDecArgsList = {ident ~ ("," ~ ident)* }
+funcBody = { expr+ }
+funcDec = { "fn" ~ ident ~ "()" ~ funcBody ~ "end" }
+
+integer = @{ "_"? ~ ASCII_DIGIT+ }
+decimal = @{ "_"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
+
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+/* TODO: support double quoted strings */
+string = @{ "'" ~ ( "''" | (!"'" ~ ANY) )* ~ "'" }
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+// TODO: multiline comments
+COMMENT = _{ "#" ~ (!"\n" ~ ANY)* } // | ("/*" ~ ANY* ~ "*/") }

@@ -1,0 +1,10 @@
+
+print()
+print('hello')
+print('hello', 'arg2') # comment
+
+fn say_hi()
+  print('hello')
+end
+
+say_hi()
