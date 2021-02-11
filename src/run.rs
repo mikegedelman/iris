@@ -1,44 +1,29 @@
 use crate::ast::{AstNode,Term,Op};
 use std::collections::HashMap;
 
+use crate::builtins;
+
 #[derive(Clone, Debug)]
 pub enum Value {
     Integer(i32),
     Str(String),
     Bool(bool),
+    List(Vec<Value>),
     Function(Function),
     None,
     // DoublePrecisionFloat(f64),
     // Undefined,
 }
 
-pub fn print_builtin(args: Vec<Value>) -> Value {
-    let mut print_strs = vec![];
-    for arg in args {
-        let s = match arg {
-            Value::Integer(x) => format!("{}", x),
-            Value::Str(x) => format!("{}", x),
-            Value::Bool(x) => format!("{}", x),
-            Value::Function(f) => format!("{}", f.name),
-            Value::None => String::from("None"),
-            // Value::DoublePrecisionFloat(x) => format!("{}", x),
-            // Value::Undefined => String::from("undefined"),
-        };
-        print_strs.push(s);
-    }
-    let joined = print_strs.join(" ");
-    println!("{}", joined);
-    Value::None
-}
+
 
 pub fn fn_call(name: &str, args: &Vec<AstNode>, scope: &mut Scope) -> Value {
-    let mut evalled_args = vec![];
-    for arg in args {
-        evalled_args.push(eval(arg, scope));
-    }
+    let evalled_args = args.iter().map(|arg| eval(arg, scope)).collect();
 
     match name {
-        "print" => print_builtin(evalled_args),
+        "print" => builtins::print(evalled_args),
+        // "list" => builtins::list(evalled_args, scope),
+        "list" => Value::List(evalled_args),
         _ => {
             let func = scope.get_fn(name);
             let mut inner_scope = scope.nest(format!("function \"{}\"", name));
@@ -180,6 +165,7 @@ fn arithmetic(lhs: Value, op: Op, rhs: Value) -> Value {
         Value::Str(s) => arith_str(s, op, rhs),
         Value::Bool(_) => panic!("todo implement bool arith"), // arith_bool(s, op, rhs),
         Value::Function(_) => panic!("can't {:?} on function", op), // arith_bool(s, op, rhs),
+        Value::List(_) => panic!("todo implement list arith"),
         // Value::Undefined => panic!("Can't {:?} undefined and {:?}", op, rhs),
         Value::None => panic!("Can't {:?} None and {:?}", op, rhs),
     }

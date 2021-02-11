@@ -1,17 +1,37 @@
-print();
-print(123);
-print(10, 20);
 
-fn test(x, y) {
-  print(1);
 
-  if (false) {
-    print('hi');
-  } elif (true) {
-    print('here');
-  } else {
-    print('else');
-  }
-}
 
-test(1, 2);
+
+# print();
+# print(123);
+# print(10, 20);
+# 
+# fn test(x, y) {
+#   print(1);
+# 
+#   x = [1, 2, 3];
+#   print(x);
+# }
+# 
+# test(1, 2);
+
+# fn update_requirements (lines outdated_pkgs)
+#   let mut dirty = False
+#   let updated = build list for line in lines as
+#     let (clean_line, comment) = line.split("#")
+#     if "nobump" in comment? then
+#         yield line  # Leave the line unmodified
+#     end
+# 
+#     let req = parse_req(clean_line)
+#     let matched_outdated = outdated_pkgs.filter(|pkg| pkg.name == req.name).first()
+#     yield match matched_outdated
+#     | Some(newer_version) => do
+#         dirty := True
+#         build_new_req(matched_outdated) + comment?
+#         end
+#     | None => line
+#   done
+#   (updated, dirty)
+# end
+# 

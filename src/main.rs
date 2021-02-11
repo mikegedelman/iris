@@ -1,8 +1,9 @@
 extern crate logos;
 
+mod tok;
 mod ast;
 mod run;
-mod tok;
+mod builtins;
 
 use std::env;
 
