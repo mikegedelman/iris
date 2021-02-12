@@ -15,8 +15,6 @@ pub enum Value {
     // Undefined,
 }
 
-
-
 pub fn fn_call(name: &str, args: &Vec<AstNode>, scope: &mut Scope) -> Value {
     let evalled_args = args.iter().map(|arg| eval(arg, scope)).collect();
 

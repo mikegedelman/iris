@@ -162,7 +162,7 @@ pub enum Tok<'input> {
     #[regex(r"[\r\n]+", logos::skip)]
     Crlf,
 
-    #[regex(r"\#.*(\r|\n)", logos::skip)]
+    #[regex(r"//.*(\r|\n)", logos::skip)]
     Comment,
 
     // Logos requires one token variant to handle errors,

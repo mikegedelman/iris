@@ -22,6 +22,12 @@ pub enum Op {
     Exp,
 }
 
+// #[derive(Clone, Debug, PartialEq, Eq)]
+// pub struct Var {
+//     type_: String,
+//     name: String,
+// }
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AstNode {
     FnCall {
