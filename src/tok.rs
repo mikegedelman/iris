@@ -147,6 +147,12 @@ pub enum Tok<'input> {
     #[token("not")]
     Not,
 
+    #[token("end")]
+    End,
+
+    #[token("then")]
+    Then,
+
     #[regex(r#"'([^'\\]|\\t|\\u|\\n|\\')*'"#)]
     SingleLiteralString(&'input str),
 
@@ -159,7 +165,7 @@ pub enum Tok<'input> {
     #[regex("[0-9]+", |lex| lex.slice().parse())]
     Number(i32),
 
-    #[regex(r"[\r\n]+", logos::skip)]
+    #[regex(r"[\r\n]+")]
     Crlf,
 
     #[regex(r"//.*(\r|\n)", logos::skip)]

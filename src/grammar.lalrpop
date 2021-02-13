@@ -6,27 +6,24 @@ grammar<'input>(input: &'input str);
 
 
 pub Iris: Vec<AstNode> = {
-    <s:TopLevel*> => s,
+    Crlf* <s:TopLevel*> => s,
 };
 
-Semicolon<T>: Vec<T> = { // (1)
-    <e:T> <v:( <T>)*> => { // (2)
-        let mut ret = vec![e];
-        let mut v = v;
-        ret.append(&mut v);
-        ret
-    }
-}
 
 TopLevel: AstNode = {
-    <f:FnDef> => f,
-    <x:Assign> ";" => x,
-    <x:IfStmt> => x,
-    <e:Expr> ";" => e,
+    <s:Statement> Crlf+ => s,
 };
 
+Statement: AstNode = {
+    <f:FnDef> => f,
+    <x:VarDeclaration> => x,
+    <x:Assignment> => x,
+    // <x:IfStmt> => x,
+    <e:Expr> => e,
+}
+
 Comma<T>: Vec<T> = { // (1)
-    <e:T> <v:("," <T>)*> => { // (2)
+    <e:T> <v:("," Crlf* <T>)*> => { // (2)
         let mut ret = vec![e];
         let mut v = v;
         ret.append(&mut v);
@@ -34,14 +31,49 @@ Comma<T>: Vec<T> = { // (1)
     }
 }
 
-// ArgDecl = { <t:Ident> <v:Ident> =>  }
+Expr: AstNode = {
+    <f:FnCall> => f,
+    <l:ListLiteral> => l,
+    <a:AnonymousFnDef> => a,
+    <i:IfStmt> => i,
+    <d:DotOp> => d,
+    <t:Term> => t,
+}
+
+DotOp: AstNode = {
+    <e:Expr> "." <ast_fn:FnCall> => match ast_fn {
+        AstNode::FnCall{ name, args } => {
+            let mut new_args = args;
+            new_args.insert(0, e);
+            // A way to do this immutably?
+            // let mut new_args = vec![e];
+            // new_args.append(args);
+            AstNode::FnCall {
+                name,
+                args: new_args,
+            }
+        },
+        _ => unreachable!(),
+    }
+}
+
 FnDefArgs = Comma<Ident>;
 FnBodyStmt: AstNode = {
-    <t:TopLevel> => t,
-    <x:Return> ";" => x,
+    <s:Statement> Crlf+ => s,
+    // <x:Return> Crlf => x,
 }
-FnDef: AstNode = {
-    "fn" <name:Ident> "(" <args:FnDefArgs?> ")" "{" <body: FnBodyStmt*> "}" => AstNode::FnDef {
+OneLineFnDef: AstNode = {
+    "fn" <name:Ident> "(" <args:FnDefArgs?> ")" <body: Expr> "end" => AstNode::FnDef {
+        name,
+        args: match args {
+            Some(a) => a,
+            None => vec![],
+        },
+        body: vec![body],
+    }
+}
+MultiLineFnDef: AstNode = {
+    "fn" <name:Ident> "(" <args:FnDefArgs?> ")" Crlf+ <body: FnBodyStmt*> "end" => AstNode::FnDef {
         name,
         args: match args {
             Some(a) => a,
@@ -50,10 +82,24 @@ FnDef: AstNode = {
         body,
     }
 }
+FnDef: AstNode = {
+    <x:OneLineFnDef> => x,
+    <x:MultiLineFnDef> => x,
+}
 
 // TODO: runtime to support anonymous fn defs
-AnonymousFnDef: AstNode = {
-    "fn" "(" <args:FnDefArgs?> ")" "{" <body: FnBodyStmt*> "}" => AstNode::FnDef {
+OneLineAnonymousFnDef: AstNode = {
+    "fn" "(" <args:FnDefArgs?> ")" <body: Expr> "end" => AstNode::FnDef {
+        name: "anon".to_string(),
+        args: match args {
+            Some(a) => a,
+            None => vec![],
+        },
+        body: vec![body],
+    }
+}
+MultiLineAnonymousFnDef: AstNode = {
+    "fn" "(" <args:FnDefArgs?> ")" Crlf+ <body: FnBodyStmt*> "end" => AstNode::FnDef {
         name: "anon".to_string(),
         args: match args {
             Some(a) => a,
@@ -62,29 +108,54 @@ AnonymousFnDef: AstNode = {
         body,
     }
 }
+AnonymousFnDef: AstNode = {
+    <x:OneLineAnonymousFnDef> => x,
+    <x:MultiLineAnonymousFnDef> => x,
+}
 
-Assign: AstNode = {
+VarDeclaration: AstNode = {
+    "let" <ident:Ident> "=" <e:Expr> => AstNode::VarDeclaration(
+        Term::Ident(ident),
+        Box::new(e),
+    )
+}
+Assignment: AstNode = {
     <ident:Ident> "=" <e:Expr> => AstNode::Assignment(
         Term::Ident(ident),
         Box::new(e),
     )
 }
 
-Return: AstNode = {
-    "return" <e:Expr> => AstNode::Return(Box::new(e)),
+// Return: AstNode = {
+//     "return" <e:Expr> => AstNode::Return(Box::new(e)),
+// }
+
+
+OneLineElse: AstNode = { "else" <else_body:Expr> => else_body }
+OneLineIfStmt: AstNode = {
+    "if" <cond_expr:Expr> "then" <body: Expr> <else_body:OneLineElse?> "end"  => AstNode::If {
+        cond_expr: Box::new(cond_expr),
+        body: vec![body],
+        else_if: vec![],
+        else_body: match else_body {
+            Some(b) => vec![b],
+            None => vec![],
+        }
+    }
 }
 
 ElseIf: AstNode = {
-    "elif" "(" <cond_expr:Expr> ")" "{" <body: FnBodyStmt*> "}" => AstNode::ElseIf {
+    "elif" <cond_expr:Expr> "then" Crlf+ <body: FnBodyStmt*> => AstNode::ElseIf {
         cond_expr: Box::new(cond_expr),
         body,
     }
 }
 Else: Vec<AstNode> = {
-    "else" "{" <body: FnBodyStmt*> "}" => body,
+    "else" Crlf+ <body: FnBodyStmt*> => body,
 }
-IfStmt: AstNode = {
-    "if" "(" <cond_expr:Expr> ")" "{" <body: FnBodyStmt*> "}" <else_if:ElseIf*> <else_body:Else?> => AstNode::If {
+
+MultiLineIfStmt: AstNode = {
+    "if" <cond_expr:Expr> "then" Crlf+ <body: FnBodyStmt*> <else_if:ElseIf*> <else_body:Else?> "end"  => AstNode::If {
         cond_expr: Box::new(cond_expr),
         body,
         else_if,
@@ -94,13 +165,12 @@ IfStmt: AstNode = {
         }
     }
 }
-
-Expr: AstNode = {
-    <f:FnCall> => f,
-    <l:ListLiteral> => l,
-    <a:AnonymousFnDef> => a,
-    <t:Term> => t,
+IfStmt: AstNode = {
+    <x:OneLineIfStmt> => x,
+    <x:MultiLineIfStmt> => x,
 }
+
+
 
 Term: AstNode = {
     <n:Int> => AstNode::Term(Term::Integer(n)),
@@ -207,6 +277,8 @@ extern {
         "and" => Tok::And,
         "or" => Tok::Or,
         "not" => Tok::Not,
+        "end" => Tok::End,
+        "then" => Tok::Then,
         SingleLiteralString => Tok::SingleLiteralString(<&'input str>),
         DoubleLiteralString => Tok::DoubleLiteralString(<&'input str>),
         IdentTok => Tok::Ident(<&'input str>),

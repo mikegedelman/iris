@@ -94,7 +94,7 @@ fn iris() {
     );
     assert_eq!(
         grammar::IrisParser::new().parse("x = f(y);").unwrap()[0],
-        AstNode::Assignment(
+        AstNode::VarDeclaration(
             Term::Ident("x".to_string()),
             Box::new(AstNode::FnCall{
                 name: "f".to_string(),

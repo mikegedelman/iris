@@ -5,7 +5,7 @@ fn fmt(val: &Value) -> String {
         Value::Integer(x) => format!("{}", x),
         Value::Str(x) => format!("{}", x),
         Value::Bool(x) => format!("{}", x),
-        Value::Function(f) => format!("{}", f.name),
+        Value::Function(f) => format!("function \"{}\"", f.name),
         Value::List(vs) => {
             let strings: Vec<String> = vs.iter().map(|v| fmt(v)).collect();
             format!("[{}]", strings.join(", "))
@@ -21,4 +21,12 @@ pub fn print(args: Vec<Value>) -> Value {
     let joined = print_strs.join(" ");
     println!("{}", joined);
     Value::None
+}
+
+pub fn len(args: Vec<Value>) -> Value {
+    assert_eq!(args.len(), 1, "len() accepts exactly one argument");
+    match &args[0] {
+        Value::List(xs) => Value::Integer(xs.len() as i32),
+        _ => panic!("Can't get len() of a {:?}"),
+    }
 }

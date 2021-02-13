@@ -1,0 +1,142 @@
+//Roadmap:
+// √ higher order functions (pass as arg, return)
+// - closures
+// - infix operators :(
+// - for .. in loops
+//   - while loops
+//   - option: some/none
+//   - multimethods
+// - "build" for loops
+// - mut
+// - pattern matching
+// - generators?
+// - dict literals
+// - start writing standard library
+// - garbage collection
+
+let x = 5
+fn test() print(55) end
+test()
+if true then print("true!!!11") end
+
+// Base while loop
+item = next(l)
+while item do
+ <body>
+ item = next(l)
+end
+
+// Syntax sugar while loop
+while item = next(l) do
+  print(item)
+end
+
+// For loop
+for item in l do
+  print(item)
+end
+
+
+// for x in [1, 2, 3] do
+
+// record Config has
+//   str username,
+//   int salary
+// end
+
+// fn new_config(user, salary)
+//   Config { user, salary }
+// end
+
+// fn get_salary(config) config->salary end
+
+fn identity(x) x end
+print(identity(5))
+
+// 235235.print()
+
+// fn map(xs, f)
+//    for x in xs do
+
+// Distinguish:
+let l = [1, 2]
+next(l)
+
+// From
+fn next(a)
+ // whatever
+end
+
+multi seq(xs)
+method seq(xs) for list
+   for i in range(xs.len()) do
+     yield xs[i]
+   end
+
+fn range(a)
+  let cur = 0
+  fn ()
+    if cur > a then
+      none
+    else
+      let ret = cur
+      cur += 1
+      some(ret)
+    end
+  end
+end
+
+method iter(xs) for list
+  let cur = 0
+  let sz = xs.len()
+
+  fn ()
+    if cur == sz then
+      none
+    else
+      let ret = xs[cur]
+      cur += 1
+      some(ret)
+    end
+  end
+end
+
+fn iter(xs)
+
+for x in l do
+  print(x)
+end
+-->
+
+fn lex(xs)
+  build list for char in xs as some_fn(char) end
+    match char.cur()
+      "d" -> DTok,
+      "1" -> NumberTok(1),
+      "23" -> match char.peek()
+                "3" -> "233"
+                 _  -> return None
+              end
+      _  -> continue
+    end
+  end
+end
+
+
+l = [1, 2, 3]
+next = l.iter()
+while item = next() do
+  print(item)
+end
+
+item = next(l)
+while item do
+  <body>
+  item = next(l)
+end
+
+
+
+build list for x in l as
+  x + 1
+end

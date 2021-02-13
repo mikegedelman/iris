@@ -10,50 +10,19 @@ pub enum Value {
     Bool(bool),
     List(Vec<Value>),
     Function(Function),
+    // Option(Box<OptionValue>),
+    // Option(
     None,
     // DoublePrecisionFloat(f64),
     // Undefined,
 }
 
-pub fn fn_call(name: &str, args: &Vec<AstNode>, scope: &mut Scope) -> Value {
-    let evalled_args = args.iter().map(|arg| eval(arg, scope)).collect();
-
-    match name {
-        "print" => builtins::print(evalled_args),
-        // "list" => builtins::list(evalled_args, scope),
-        "list" => Value::List(evalled_args),
-        _ => {
-            let func = scope.get_fn(name);
-            let mut inner_scope = scope.nest(format!("function \"{}\"", name));
-            if func.args.len() != evalled_args.len() {
-                panic!("Incorrect number of args for function \"{}\": got {}, expected {}", name,  evalled_args.len(), func.args.len());
-            }
-            for (idx, argname) in func.args.iter().enumerate() {
-                inner_scope.set_var(argname, evalled_args[idx].clone());
-            }
-            exec_fn(func, &mut inner_scope)
-            // For closures: check for variables in inner scope to be lifted back out?
-        }
-    }
+#[derive(Clone, Debug)]
+enum OptionValue {
+    None,
+    Some(Value),
 }
 
-pub fn exec_fn(func: Function, scope: &mut Scope) -> Value {
-    let mut ret: Option<Value> = None;
-    for ast in func.body {
-        match ast {
-            AstNode::Return(ast) => {
-                ret = Some(eval(&ast, scope));
-                break;
-            },
-            _ => stmt(&ast, scope)
-        };
-    }
-
-    match ret {
-        Some(val) => val,
-        None => Value::None,
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Function {
@@ -65,13 +34,12 @@ pub struct Function {
 #[derive(Clone, Debug)]
 pub struct Scope {
     context: String,
-    fns: HashMap<String, Function>,
     vars: HashMap<String, Value>,
 }
 
 impl Scope {
     pub fn new(context: String) -> Scope {
-        Scope{ context, fns: HashMap::new(), vars: HashMap::new() }
+        Scope{ context, vars: HashMap::new() }
     }
 
     pub fn nest(&self, context: String) -> Scope  {
@@ -80,20 +48,13 @@ impl Scope {
         ret
     }
 
-    pub fn add_fn(&mut self, name: String, args: Vec<String>, body: Vec<AstNode>) {
-        let func = Function { name: name.clone(), args, body };
-        self.fns.insert(name, func);
-    }
-
-    pub fn get_fn(&self, name: &str) -> Function {
-        let func = match self.fns.get(name) {
-            Some(body) => body,
-            None => panic!("unknown function: \"{}\" | context: {}", name, self.context),
-        };
-        return func.clone();
+    pub fn declare_var(&mut self, name: &str, val: Value) {
+        assert!(!self.vars.contains_key(name), format!("can't redeclare var {}", name));
+        self.vars.insert(name.to_string(), val);
     }
 
     pub fn set_var(&mut self, name: &str, val: Value) {
+        assert!(self.vars.contains_key(name), format!("can't assign to var {}: not declared", name));
         self.vars.insert(name.to_string(), val);
     }
 
@@ -104,7 +65,68 @@ impl Scope {
         };
         val.clone()
     }
+
+    pub fn var_is_set(&mut self, name: &str) -> bool {
+        self.vars.contains_key(name)
+    }
 }
+
+pub fn fn_call(name: &str, args: &Vec<AstNode>, scope: &mut Scope) -> Value {
+    let evalled_args = args.iter().map(|arg| eval(arg, scope)).collect();
+
+    match name {
+        "print" => builtins::print(evalled_args),
+        // "list" => builtins::list(evalled_args, scope),
+        "list" => Value::List(evalled_args),
+        "len" => builtins::len(evalled_args),
+        _ => {
+            let maybe_func = scope.get_var(name);
+            let func = match maybe_func {
+                Value::Function(f) => f,
+                _ => panic!("{:?} is not a function", maybe_func),
+            };
+            let mut inner_scope = scope.nest(format!("function \"{}\"", name));
+
+            if func.args.len() != evalled_args.len() {
+                panic!("Incorrect number of args for function \"{}\": got {}, expected {}", name,  evalled_args.len(), func.args.len());
+            }
+            for (idx, argname) in func.args.iter().enumerate() {
+                if inner_scope.var_is_set(argname) {
+                    panic!("function argument {} mirrors variable of the same name in outer scope", argname);
+                }
+                inner_scope.declare_var(argname, evalled_args[idx].clone());
+            }
+            exec_fn(func, &mut inner_scope)
+            // For closures: check for variables in inner scope to be lifted back out?
+        }
+    }
+}
+
+pub fn exec_fn(func: Function, scope: &mut Scope) -> Value {
+    let mut ret: Option<Value> = None;
+
+    let body_len = func.body.len();
+    for (idx, ast) in func.body.iter().enumerate() {
+        match ast {
+            // AstNode::Return(ast) => {
+            //     ret = Some(eval(&ast, scope));
+            //     break;
+            // },
+            _ => {
+                let val = stmt(&ast, scope);
+                if idx == (body_len - 1) {
+                    ret = Some(val);
+                }
+            }
+        };
+    }
+
+    match ret {
+        Some(val) => val,
+        None => Value::None,
+    }
+}
+
 
 fn test_bool_val(v: Value) -> bool {
     match v {
@@ -140,20 +162,37 @@ pub fn stmt_body(body: &Vec<AstNode>, scope: &mut Scope) {
     }
 }
 
-pub fn stmt(ast: &AstNode, scope: &mut Scope) {
+pub fn stmt(ast: &AstNode, scope: &mut Scope) -> Value {
     match ast {
-        AstNode::FnDef{ name, args, body } => {
-            scope.add_fn(String::from(name), args.to_vec(), body.to_vec());
+        // AstNode::FnDef{ name, args, body } => {
+        //     scope.set_var(
+        //         name,
+        //         Value::Function(
+        //             Function {
+        //                 name: name.to_string(),
+        //                 args: args.to_vec(),
+        //                 body: body.to_vec(),
+        //             }
+        //         )
+        //     );
+        //     Value::None
+        // },
+        AstNode::VarDeclaration(Term::Ident(var), astbox) => {
+            let val = eval(astbox, scope);
+            scope.declare_var(var, val);
+            Value::None
         },
         AstNode::Assignment(Term::Ident(var), astbox) => {
             let val = eval(astbox, scope);
             scope.set_var(var, val);
+            Value::None
         },
         AstNode::If{ cond_expr, body, else_if, else_body } => {
             exec_if(cond_expr, body, else_if, else_body, scope);
+            Value::None // todo
         }
-        _ => { eval(ast, scope); },
-    };
+        _ => eval(ast, scope),
+    }
 }
 
 fn arithmetic(lhs: Value, op: Op, rhs: Value) -> Value {
@@ -217,6 +256,9 @@ pub fn arith_str(a: String, op: Op, rhs: Value) -> Value {
 pub fn eval(ast: &AstNode, scope: &mut Scope) -> Value {
     match ast {
         AstNode::FnCall{ name, args } => fn_call(name, args, scope),
+        AstNode::FnDef{ name, args, body} => Value::Function(
+            Function { name: name.to_string(), args: args.to_vec(), body: body.to_vec() }
+        ),
         AstNode::Arithmetic(lhs, op, rhs) => arithmetic(eval(lhs, scope), op.clone(), eval(rhs, scope)),
         AstNode::Term(Term::Str(x)) => Value::Str(x.to_string()),
         AstNode::Term(Term::Integer(x)) => Value::Integer(*x),

@@ -41,6 +41,7 @@ pub enum AstNode {
     },
     Term(Term),
     Arithmetic(Box<AstNode>, Op, Box<AstNode>),
+    VarDeclaration(Term, Box<AstNode>),
     Assignment(Term, Box<AstNode>),
     Return(Box<AstNode>),
     If {
