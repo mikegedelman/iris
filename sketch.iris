@@ -1,6 +1,6 @@
 //Roadmap:
 // √ higher order functions (pass as arg, return)
-// - closures
+// √ closures
 // - infix operators :(
 // - for .. in loops
 //   - while loops

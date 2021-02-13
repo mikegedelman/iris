@@ -1,50 +1,76 @@
+// let x = 5
+// print(x)
 
-// let test_again = fn(x, y)
-//   if false then
-//      print("true!!!11 multiline")
-//   elif false then
-//      print("elif yo")
-//   else
-//      print("Else yo")
+// let f = fn(y) y end
+// print(f(x))
+
+let test_again = fn(x, y)
+  if false then
+     print("true!!!11 multiline")
+  elif false then
+     print("elif yo")
+  else
+     print("Else yo")
+  end
+  if true then print("another inline") end
+  let xx = list("two", 1, 5)
+  print(xx)
+  // print(x)
+  // build list for ele in x as
+end
+test_again(55, 66)
+
+// // let ret_test = fn()
+// //   5
+// // end
+// // ret_test()
+
+// // let f = fn(y) print(y) end
+// // print(f)
+
+// // let higher_order = fn(func)
+// //   func("hi")
+// // end
+// // higher_order(f)
+
+// // let higher_order_two = fn ()
+// //   fn ()
+// //    print("returned fn")
+// //   end
+// // end
+// // let g = higher_order_two()
+// // g()
+
+// // let x = 1
+// // x = 2
+// // print(x)
+
+// let one = fn()
+//   let a = 1
+//   fn()
+//      let b = 2
+//      print(a)
+
+//      fn()
+//        let c = 33
+//        print(a)
+//        print(b)
+//        print(c)
+//       end
 //   end
-//   if true then print("another inline") end
-//   let x = list("two", 1, 5)
-//   print(x)
-//   // print(x)
-//   // build list for ele in x as
 // end
 
-let ret_test = fn()
-  5
-end
-ret_test()
-
-let f = fn(y) print(y) end
-print(f)
-
-let higher_order = fn(func)
-  func("hi")
-end
-higher_order(f)
-
-let higher_order_two = fn ()
-  fn ()
-   print("returned fn")
-  end
-end
-let g = higher_order_two()
-g()
-
-let x = 1
-x = 2
-print(x)
+// let testone = one()
+// let testtwo = testone()
+// let testthree = testtwo()
+// testthree()
 
 // def make_multiplier_of(n):
 //     def multiplier(x):
 //         return x * n
 //     return multiplier
 
-// method iter for list = fn (xs)
+// // method iter for list = fn (xs)
 let iter = fn (xs)
   let cur = 0
   let sz = xs.len()
@@ -66,6 +92,19 @@ let iter = fn (xs)
 end
 let l = [1, 2, 3]
 let next = iter(l)
-print(next())
+next()
+next()
 
-// test_again(52, 55)
+let make_greeting_fn = fn(hello)
+   fn(name)
+     print(hello, name)
+   end
+end
+let english_hello = make_greeting_fn("hello")
+english_hello("john")
+
+let wiseau_hello = make_greeting_fn("oh hi")
+wiseau_hello("mark")
+
+
+// // test_again(52, 55)
