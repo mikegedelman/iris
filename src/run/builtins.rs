@@ -1,5 +1,6 @@
 use crate::run::Value;
 
+/// Format the given value into a string
 fn fmt(val: &Value) -> String {
     match val {
         Value::Integer(x) => format!("{}", x),
@@ -12,12 +13,10 @@ fn fmt(val: &Value) -> String {
         },
         Value::None => "None".to_string(),
         Value::Some(s) => fmt(s),
-        _ => panic!("unimplemented {:?}", val),
-        // Value::DoublePrecisionFloat(x) => format!("{}", x),
-        // Value::Undefined => String::from("undefined"),
     }
 }
 
+/// Builtin "print" function
 pub fn print(args: Vec<Value>) -> Value {
     let print_strs: Vec<String> = args.iter().map(|arg| fmt(&arg)).collect();
     let joined = print_strs.join(" ");
@@ -25,6 +24,7 @@ pub fn print(args: Vec<Value>) -> Value {
     Value::None
 }
 
+/// Builtin len() for collections
 pub fn len(args: Vec<Value>) -> Value {
     assert_eq!(args.len(), 1, "len() accepts exactly one argument");
     match &args[0] {
@@ -33,11 +33,10 @@ pub fn len(args: Vec<Value>) -> Value {
     }
 }
 
-// "Some" => builtins::some(evalled_args),
-// "unwrap" => builtins::unwrap(evalled_args),
-// "is_some" => builtins::is_some(evalled_args),
-// "is_none" => builtins::is_none(evalled_args),
 
+/// This and the following function provide an interace to work with an
+/// Option type, like in rust. These are roughed in like this at the moment
+/// to support iterators.
 pub fn some(args: Vec<Value>) -> Value {
     assert_eq!(args.len(), 1, "Some() accepts exactly one argument");
     Value::Some(Box::new(args[0].clone()))
@@ -48,7 +47,7 @@ pub fn unwrap(args: Vec<Value>) -> Value {
     let val = args[0].clone();
     match val {
         Value::Some(val) => *val,
-        _ => panic!("Tried to unwrap() {:?}", )
+        _ => panic!("Tried to unwrap() {:?}", val),
     }
 }
 

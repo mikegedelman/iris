@@ -10,7 +10,7 @@ use crate::ast::{AstNode,Term};
 use scope::Scope;
 use typing::*;
 
-
+/// Representation of any input value or result of computation
 #[derive(Clone, Debug)]
 pub enum Value {
     Integer(i32),
@@ -20,18 +20,21 @@ pub enum Value {
     Function(Function),
     Some(Box<Value>),
     None,
+    // Future planned builtin types:
     // Tuple(Vec<Value>, usize),
     // Dict(HashMap<Value, Value>),
-    // Record
+    // Record{
+    //   ...   
+    // }
     // Enum{
     //     name: String,
     //     variant: String,
     //     data: Vec<Value>,
     // },
-    // DoublePrecisionFloat(f64),
-    // Undefined,
+    // Decimal(?)
 }
 
+/// Call the given function with args
 fn fn_call(name: &str, args: &Vec<AstNode>, scope: &Rc<RefCell<Scope>>) -> Value {
     let evalled_args = args.iter().map(|arg| eval(arg, scope)).collect();
 

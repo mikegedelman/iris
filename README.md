@@ -5,18 +5,18 @@ Roadmap:
  √ methods
  ⚙ infix operators :(
  ⚙ types
- - namespacing
  √ for .. in loops
    √ while loops
    √ option: some/none (kind of roughed it in for now)
- - "build" for loops
- - mut
+ - namespacing
+ - let mut x = ...
  - pattern matching
- - generators?
+ - generators
  - dict literals
- - start writing standard library
+ - standard library
  - garbage collection
  - structural sharing
+ - Rust FFI
  - imports, namespaces etc
  - Double type (i32s only supported currently)
 

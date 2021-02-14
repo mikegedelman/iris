@@ -1,13 +1,14 @@
+/// A primitive terminal value
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Term {
     Integer(i32),
-    // DoublePrecisionFloat(f64),
     Ident(String),
     Str(String),
     Bool(bool),
     None,
 }
 
+/// Unary and binary operators
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Op {
     Add,
@@ -19,7 +20,6 @@ pub enum Op {
     Shr,
     And,
     Or,
-    // Xor,
     Exp,
     Not,
     GreaterThan,
@@ -36,12 +36,7 @@ pub enum Op {
     MemberAccess,
 }
 
-// #[derive(Clone, Debug, PartialEq, Eq)]
-// pub struct Var {
-//     type_: String,
-//     name: String,
-// }
-
+/// A node of the AST, built by the parser, and evaluated by the runner
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AstNode {
     FnCall {

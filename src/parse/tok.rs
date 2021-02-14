@@ -183,11 +183,7 @@ pub enum Tok<'input> {
     #[regex(r"#.*(\r|\n)", logos::skip)]
     Comment,
 
-    // Logos requires one token variant to handle errors,
-    // it can be named anything you wish.
     #[error]
-    // We can also use this variant to define whitespace,
-    // or any other matches we wish to skip.
     #[regex(r"[ \t\f]+", logos::skip)]
     Error,
 }
