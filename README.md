@@ -6,7 +6,7 @@ Roadmap:
  ⚙ infix operators :(
  ⚙ types
  - namespacing
- - for .. in loops
+ √ for .. in loops
    √ while loops
    √ option: some/none (kind of roughed it in for now)
  - "build" for loops

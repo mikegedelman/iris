@@ -171,7 +171,7 @@ pub enum Tok<'input> {
     #[regex(r#""([^"\\]|\\t|\\u|\\n|\\")*""#)]
     DoubleLiteralString(&'input str),
 
-    #[regex("[a-zA-Z_]+")]
+    #[regex("[a-zA-Z_]+[a-zA-Z0-9_]*")]
     Ident(&'input str),
 
     #[regex("[0-9]+", |lex| lex.slice().parse())]
