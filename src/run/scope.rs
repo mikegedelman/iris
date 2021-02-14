@@ -21,9 +21,9 @@ impl Scope {
 
     /// Associated fn instead of a method because we want to clone an Rc
     /// to an existing RefCell, so we accept that instead
-    pub fn nest(parent: Rc<RefCell<Scope>>, context: &str) -> Scope  {
+    pub fn nest(parent: &Rc<RefCell<Scope>>, context: &str) -> Scope  {
         Scope {
-            parent: Some(Rc::clone(&parent)),
+            parent: Some(Rc::clone(parent)),
             context: context.to_string(),
             vars: HashMap::new(),
             methods: HashMap::new(),

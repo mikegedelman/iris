@@ -32,8 +32,8 @@ pub enum Value {
     // Undefined,
 }
 
-fn fn_call(name: &str, args: &Vec<AstNode>, scope: Rc<RefCell<Scope>>) -> Value {
-    let evalled_args = args.iter().map(|arg| eval(arg, Rc::clone(&scope))).collect();
+fn fn_call(name: &str, args: &Vec<AstNode>, scope: &Rc<RefCell<Scope>>) -> Value {
+    let evalled_args = args.iter().map(|arg| eval(arg, scope)).collect();
 
     match name {
         "print" => builtins::print(evalled_args),
@@ -86,11 +86,7 @@ fn exec_fn(func: Function) -> Value {
     for (idx, ast) in func.body.iter().enumerate() {
         match ast {
             _ => {
-                // statement exec gets an Rc, which I think makes sense,
-                // because statements may create a new function, which
-                // would then need a new nested scope that refers to
-                // this one
-                let val = stmt(&ast, Rc::clone(&scope));
+                let val = stmt(&ast, &scope);
                 if idx == (body_len - 1) {
                     ret = Some(val);
                 }
@@ -122,23 +118,23 @@ fn set_var_in(scope: &Rc<RefCell<Scope>>, var: &str, val: Value) {
     s.set_var(var, val);
 }
 
-fn for_in(item_var: String, in_val: &AstNode, body: &Vec<AstNode>, scope: Rc<RefCell<Scope>>) {
+fn for_in(item_var: &str, in_val: &AstNode, body: &Vec<AstNode>, scope: &Rc<RefCell<Scope>>) {
     let inner_scope = Rc::new(RefCell::new(Scope::nest(scope, "for loop")));
-    let next = fn_call("Iter", &vec![in_val.clone()], Rc::clone(&inner_scope));
+    let next = fn_call("Iter", &vec![in_val.clone()], &inner_scope);
     declare_var_in(&inner_scope, "__next", next);
-    declare_var_in(&inner_scope, &item_var, fn_call("__next", &vec![], Rc::clone(&inner_scope)));
+    declare_var_in(&inner_scope, &item_var, fn_call("__next", &vec![], &inner_scope));
 
     let is_some_arg = vec![AstNode::Term(Term::Ident(item_var.to_string()))];
-    while test_bool_val(fn_call("is_some", &is_some_arg, Rc::clone(&inner_scope))) {
-        stmt_body(body, Rc::clone(&inner_scope));
-        set_var_in(&inner_scope, &item_var, fn_call("__next", &vec![], Rc::clone(&inner_scope)));
+    while test_bool_val(fn_call("is_some", &is_some_arg, &inner_scope)) {
+        stmt_body(body, &inner_scope);
+        set_var_in(&inner_scope, item_var, fn_call("__next", &vec![], &inner_scope));
     }
 }
 
-fn while_stmt(cond_expr: &AstNode, body: &Vec<AstNode>, scope: Rc<RefCell<Scope>>) {
+fn while_stmt(cond_expr: &AstNode, body: &Vec<AstNode>, scope: &Rc<RefCell<Scope>>) {
     let inner_scope = Rc::new(RefCell::new(Scope::nest(scope, "for loop")));
-    while test_bool_val(eval(cond_expr, Rc::clone(&inner_scope))) {
-        stmt_body(body, Rc::clone(&inner_scope));
+    while test_bool_val(eval(cond_expr, &inner_scope)) {
+        stmt_body(body, &inner_scope);
     }
 }
 
@@ -147,29 +143,29 @@ fn exec_if(
     body: &Vec<AstNode>,
     else_if: &Vec<AstNode>,
     else_body: &Vec<AstNode>,
-    scope: Rc<RefCell<Scope>>
+    scope: &Rc<RefCell<Scope>>
 ) -> Value {
-    if test_bool_val(eval(cond_expr, Rc::clone(&scope))) {
-        return stmt_body(body, Rc::clone(&scope));
+    if test_bool_val(eval(cond_expr, scope)) {
+        return stmt_body(body, scope);
     }
     for try_else_if in else_if {
         let (cond_expr, body) = match try_else_if {
             AstNode::ElseIf{ cond_expr, body } => (cond_expr, body),
             _ => panic!("expected ElseIf, got {:?}", try_else_if),
         };
-        if test_bool_val(eval(cond_expr, Rc::clone(&scope))) {
-            return stmt_body(body, Rc::clone(&scope));
+        if test_bool_val(eval(cond_expr, scope)) {
+            return stmt_body(body, scope);
         }
     }
-    stmt_body(else_body, Rc::clone(&scope))
+    stmt_body(else_body, scope)
 
 }
 
-fn stmt_body(body: &Vec<AstNode>, scope: Rc<RefCell<Scope>>) -> Value {
+fn stmt_body(body: &Vec<AstNode>, scope: &Rc<RefCell<Scope>>) -> Value {
     let mut ret: Option<Value> = None;
     let body_len = body.len();
     for (idx, ast) in body.iter().enumerate() {
-        let val = stmt(&ast, Rc::clone(&scope));
+        let val = stmt(&ast, scope);
         if idx == (body_len - 1) {
             ret = Some(val);
         }
@@ -181,7 +177,7 @@ fn stmt_body(body: &Vec<AstNode>, scope: Rc<RefCell<Scope>>) -> Value {
 }
 
 
-fn eval(ast: &AstNode, scope: Rc<RefCell<Scope>>) -> Value { // : &mut Scope) -> Value {
+fn eval(ast: &AstNode, scope: &Rc<RefCell<Scope>>) -> Value { // : &mut Scope) -> Value {
     match ast {
         AstNode::FnCall{ name, args } => fn_call(name, args, scope),
         AstNode::FnDef{ name, args, body } => {
@@ -198,9 +194,9 @@ fn eval(ast: &AstNode, scope: Rc<RefCell<Scope>>) -> Value { // : &mut Scope) ->
             exec_if(cond_expr, body, else_if, else_body, scope)
         },
         AstNode::Infix(lhs, op, rhs) => ops::infix(
-            eval(lhs, Rc::clone(&scope)), op.clone(), eval(rhs, Rc::clone(&scope))
+            eval(lhs, scope), op.clone(), eval(rhs, scope)
         ),
-        AstNode::Unary(op, rhs) => ops::unary(op.clone(), eval(rhs, Rc::clone(&scope))),
+        AstNode::Unary(op, rhs) => ops::unary(op.clone(), eval(rhs, scope)),
         AstNode::Term(Term::Str(x)) => Value::Str(x.to_string()),
         AstNode::Term(Term::Integer(x)) => Value::Integer(*x),
         AstNode::Term(Term::Bool(x)) => Value::Bool(*x),
@@ -214,16 +210,16 @@ fn eval(ast: &AstNode, scope: Rc<RefCell<Scope>>) -> Value { // : &mut Scope) ->
     }
 }
 
-fn stmt(ast: &AstNode, scope: Rc<RefCell<Scope>>) -> Value {
+fn stmt(ast: &AstNode, scope: &Rc<RefCell<Scope>>) -> Value {
     match ast {
         AstNode::VarDeclaration(Term::Ident(var), astbox) => {
-            let val = eval(astbox, Rc::clone(&scope));
+            let val = eval(astbox, scope);
             let mut s = scope.borrow_mut();
             s.declare_var(var, val);
             Value::None
         },
         AstNode::Assignment(Term::Ident(var), astbox) => {
-            let val = eval(astbox, Rc::clone(&scope));
+            let val = eval(astbox, scope);
             let mut s = scope.borrow_mut();
             s.set_var(var, val);
             Value::None
@@ -236,18 +232,18 @@ fn stmt(ast: &AstNode, scope: Rc<RefCell<Scope>>) -> Value {
                 name: name.to_string(),
                 args: args.to_vec(),
                 body: body.to_vec(),
-                scope: Scope::nest(Rc::clone(&scope), name),
+                scope: Scope::nest(scope, name),
             };
             let mut s = scope.borrow_mut();
             s.declare_method(name, read_type_definition(for_type), method);
             Value::None
         },
         AstNode::WhileStmt(cond, body) => {
-            while_stmt(cond, body, Rc::clone(&scope));
+            while_stmt(cond, body, scope);
             Value::None
         },
         AstNode::ForStmt(iter_var, iterable, body) => {
-            for_in(iter_var.to_string(), iterable, body, Rc::clone(&scope));
+            for_in(iter_var, iterable, body, scope);
             Value::None
         },
         _ => eval(ast, scope),
@@ -257,6 +253,6 @@ fn stmt(ast: &AstNode, scope: Rc<RefCell<Scope>>) -> Value {
 pub fn run(ast_list: Vec<AstNode>) {
     let global_scope = Rc::new(RefCell::new(Scope::new(String::from("<top level>"))));
     for ast_node in ast_list {
-        stmt(&ast_node, Rc::clone(&global_scope));
+        stmt(&ast_node, &global_scope);
     }
 }

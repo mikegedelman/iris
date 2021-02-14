@@ -1,6 +1,3 @@
-# method Iter(xs) for list
-#   let cur
-# end
 
 method Iter(xs) for list
   let cur = 0
@@ -17,22 +14,7 @@ method Iter(xs) for list
   end
 end
 
-for i in 329 do
+let l = [1, 2, 3, "ayy lmfao", None]
+for i in l do
     print(i)
 end
-
-# let next = Iter([1, 2, 3])
-# let item = next()
-# while item.is_some() do
-#     print(item.unwrap())
-#     item = next()
-# end
-
-# let next = range(5)
-# print(next())
-# print(next())
-# print(next())
-# print(next())
-# print(next())
-# print(next())
-# print(next())
