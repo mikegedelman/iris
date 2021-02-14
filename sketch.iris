@@ -1,70 +1,71 @@
-//Roadmap:
-// √ higher order functions (pass as arg, return)
-// √ closures
-// - infix operators :(
-// - for .. in loops
-//   - while loops
-//   - option: some/none
-//   - multimethods
-// - "build" for loops
-// - mut
-// - pattern matching
-// - generators?
-// - dict literals
-// - start writing standard library
-// - garbage collection
+# Roadmap:
+#  √ higher order functions (pass as arg, return)
+#  √ closures
+#  - infix operators :(
+#  - for .. in loops
+#    - while loops
+#    - option: some/none
+#    - multimethods
+#  - "build" for loops
+#  - mut
+#  - destructuring
+#  - pattern matching
+#  - generators?
+#  - dict literals
+#  - start writing standard library
+#  - garbage collection
 
 let x = 5
 fn test() print(55) end
 test()
 if true then print("true!!!11") end
 
-// Base while loop
+#  Base while loop
 item = next(l)
 while item do
  <body>
  item = next(l)
 end
 
-// Syntax sugar while loop
+#  Syntax sugar while loop
 while item = next(l) do
   print(item)
 end
 
-// For loop
+#  For loop
 for item in l do
   print(item)
 end
 
 
-// for x in [1, 2, 3] do
+#  for x in [1, 2, 3] do
 
-// record Config has
-//   str username,
-//   int salary
-// end
+#  record Config has
+#    str username,
+#    int salary
+#  end
 
-// fn new_config(user, salary)
-//   Config { user, salary }
-// end
+#  fn new_config(user, salary)
+#    Config { user, salary }
+#  end
 
-// fn get_salary(config) config->salary end
+#  fn get_salary(config) config->salary end
 
 fn identity(x) x end
 print(identity(5))
 
-// 235235.print()
+#  235235.print()
 
-// fn map(xs, f)
-//    for x in xs do
+#  fn map(xs, f)
+#     for x in xs do
 
-// Distinguish:
+#  Distinguish:
 let l = [1, 2]
 next(l)
 
-// From
+#  From
 fn next(a)
- // whatever
+ #  whatever
 end
 
 multi seq(xs)
@@ -72,6 +73,74 @@ method seq(xs) for list
    for i in range(xs.len()) do
      yield xs[i]
    end
+
+# interface Iterator
+#    fn next(xs)
+
+# impl Iterator for list
+#    fn next(xs)
+
+
+# enum Value
+#   Coord(coord)
+#   Int(i)
+#   None
+# end
+
+# Records are immutable
+# record Coordinate{ x, y }
+
+enum Option
+  Some(x)
+  None
+end
+
+Value::Coord(c) => c->x 
+
+# coord = Coordinate{ x: 1, y: 2 }
+# fn as_tup(coord)
+#   (coord.x, coord.y)
+
+
+interface Iterable
+   iter(xs)  # Return a function usually called next() that, on each call, returns the next element in the list
+
+implement Iterable for list
+    method iter(xs) for list
+      let cur = 0
+      let sz = xs.len()
+
+      fn ()
+        if cur == sz then
+          none
+        else
+          let ret = xs[cur]
+          cur += 1
+          some(ret)
+        end
+      end
+    end
+
+
+interface Iterator
+  # Return an option: Some(x) when an element x remains in the list;
+  # None when the list has been fully traversed
+   next(xs)  
+
+method Map for IntoIterator
+  # xs should be something that can be iterated
+  # f will transform each value in xs, building a new list
+   map(xs, f)  
+
+
+  end 
+end
+
+
+
+let it = iter([1, 2, 3])
+
+map(xs, f)
 
 fn range(a)
   let cur = 0
@@ -106,7 +175,6 @@ fn iter(xs)
 for x in l do
   print(x)
 end
--->
 
 fn lex(xs)
   build list for char in xs as some_fn(char) end

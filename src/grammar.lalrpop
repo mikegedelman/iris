@@ -1,9 +1,7 @@
-// use std::str::FromStr;
-use crate::ast::{AstNode,Term};
-use crate::tok::Tok;
+use crate::ast::{AstNode,Term,Op,infix,unary};
+use crate::parse::tok::Tok;
 
 grammar<'input>(input: &'input str);
-
 
 pub Iris: Vec<AstNode> = {
     Crlf* <s:TopLevel*> => s,
@@ -18,12 +16,14 @@ Statement: AstNode = {
     <f:FnDef> => f,
     <x:VarDeclaration> => x,
     <x:Assignment> => x,
+    <m:MethodDef> => m,
+    <w:WhileStmt> => w,
     // <x:IfStmt> => x,
     <e:Expr> => e,
 }
 
-Comma<T>: Vec<T> = { // (1)
-    <e:T> <v:("," Crlf* <T>)*> => { // (2)
+Comma<T>: Vec<T> = {
+    <e:T> <v:("," Crlf* <T>)*> => {
         let mut ret = vec![e];
         let mut v = v;
         ret.append(&mut v);
@@ -32,19 +32,93 @@ Comma<T>: Vec<T> = { // (1)
 }
 
 Expr: AstNode = {
-    <f:FnCall> => f,
-    <l:ListLiteral> => l,
     <a:AnonymousFnDef> => a,
     <i:IfStmt> => i,
-    <d:DotOp> => d,
-    <t:Term> => t,
+    <a:UnaryBinaryOps> => a,
 }
 
-DotOp: AstNode = {
-    <e:Expr> "." <ast_fn:FnCall> => match ast_fn {
+
+UnaryBinaryOps = Term13;
+
+Term13: AstNode = {
+    <l:Term13> "or" <r:Term12> => infix(l, Op::Or, r),
+    Term12,
+}
+
+Term12: AstNode = {
+    <l:Term12> "and" <r:Term11> => infix(l, Op::And, r),
+    Term11,
+}
+
+Term11: AstNode = {
+    <l:Term11> "|" <r:Term10> => infix(l, Op::BitwiseOr, r),
+    Term10,
+}
+
+Term10: AstNode = {
+    <l:Term10> "^" <r:Term9> => infix(l, Op::BitwiseXor, r),
+    Term9,
+}
+
+Term9: AstNode = {
+    <l:Term9> "&" <r:Term8> => infix(l, Op::BitwiseAnd, r),
+    Term8,
+}
+
+Term8: AstNode = {
+    <l:Term8> "==" <r:Term7> => infix(l, Op::Equal, r),
+    <l:Term8> "!=" <r:Term7> =>  infix(l, Op::NotEqual, r),
+    Term7,
+}
+
+Term7: AstNode = {
+    <l:Term7> ">=" <r:Term6> => infix(l, Op::GreaterThanEqual, r),
+    <l:Term7> "<=" <r:Term6> =>  infix(l, Op::LessThanEqual, r),
+    <l:Term7> ">" <r:Term6> =>  infix(l, Op::GreaterThan, r),
+    <l:Term7> "<" <r:Term6> =>  infix(l, Op::LessThan, r),
+    Term6,
+}
+
+Term6: AstNode = {
+    <l:Term6> ">>" <r:Term5> => infix(l, Op::Shr, r),
+    <l:Term6> "<<" <r:Term5> =>  infix(l, Op::Shl, r),
+    Term5,
+}
+
+Term5: AstNode = {
+    <l:Term5> "+" <r:Term4> => infix(l, Op::Add, r),
+    <l:Term5> "-" <r:Term4> =>  infix(l, Op::Sub, r),
+    Term4,
+}
+
+Term4: AstNode = {
+    <l:Term3> "*" <r:Term3> => infix(l, Op::Mul, r),
+    <l:Term3> "/" <r:Term3> => infix(l, Op::Div, r),
+    <l:Term3> "%" <r:Term3> => infix(l, Op::Mod, r),
+    Term3,
+}
+
+Term3: AstNode = {
+    <l:Term3> "**" <r:Term2> => infix(l, Op::Exp, r),
+    Term2,
+}
+
+Term2: AstNode = {
+    "not" <r:Term2> => unary(Op::Not, r),
+    "!" <r:Term2> => unary(Op::BitwiseNot, r), 
+    "-" <r:Term2> => unary(Op::Negation, r),
+
+    Term1,
+};
+
+// "dot" is highest precedence infix operator.
+// It's simply syntactic sugar for a function call:
+// "my string".print() -> print("my string")
+Term1: AstNode = {
+    <l:Term1> "." <ast_fn:FnCall> => match ast_fn {
         AstNode::FnCall{ name, args } => {
             let mut new_args = args;
-            new_args.insert(0, e);
+            new_args.insert(0, l);
             // A way to do this immutably?
             // let mut new_args = vec![e];
             // new_args.append(args);
@@ -54,8 +128,25 @@ DotOp: AstNode = {
             }
         },
         _ => unreachable!(),
-    }
+    },
+    <l:Term1> "[" <r:Term> "]" => infix(l, Op::MemberAccess, r),
+    Term,
 }
+
+// As we go up in Term<n>, precedence goes down.
+Term: AstNode = {
+    <n:Int> => AstNode::Term(Term::Integer(n)),
+    <x:Ident> => AstNode::Term(Term::Ident(x)),
+    <b:Bool> => AstNode::Term(Term::Bool(b)),
+    <s:Str> => AstNode::Term(Term::Str(s)),
+    <n:NoneVal> => n,
+    <l:ListLiteral> => l,
+    // TODO: fnCall should probably be a unary operator instead of a term
+    <f:FnCall> => f,
+    // Grouping of exprs has highest precedence
+    "(" <e:Expr> ")" => e,
+}
+
 
 FnDefArgs = Comma<Ident>;
 FnBodyStmt: AstNode = {
@@ -86,6 +177,21 @@ FnDef: AstNode = {
     <x:OneLineFnDef> => x,
     <x:MultiLineFnDef> => x,
 }
+MethodDef: AstNode = {
+    "method" <name:Ident> "(" <args:FnDefArgs?> ")" "for" <for_type:Ident> Crlf+ <body: FnBodyStmt*> "end" => AstNode::MethodDef {
+        name,
+        for_type,
+        args: match args {
+            Some(a) => a,
+            None => vec![],
+        },
+        body,
+    }
+}
+
+// TypeIdent: AstNode = {
+
+// }
 
 // TODO: runtime to support anonymous fn defs
 OneLineAnonymousFnDef: AstNode = {
@@ -125,10 +231,6 @@ Assignment: AstNode = {
         Box::new(e),
     )
 }
-
-// Return: AstNode = {
-//     "return" <e:Expr> => AstNode::Return(Box::new(e)),
-// }
 
 
 OneLineElse: AstNode = { "else" <else_body:Expr> => else_body }
@@ -170,17 +272,11 @@ IfStmt: AstNode = {
     <x:MultiLineIfStmt> => x,
 }
 
-
-
-Term: AstNode = {
-    <n:Int> => AstNode::Term(Term::Integer(n)),
-    <x:Ident> => AstNode::Term(Term::Ident(x)),
-    <b:Bool> => AstNode::Term(Term::Bool(b)),
-    <s:Str> => AstNode::Term(Term::Str(s)),
-    "(" <t:Term> ")" => t,
+WhileStmt: AstNode = {
+    "while" <cond_expr:Expr> "do" Crlf+ <body:FnBodyStmt*> "end" => AstNode::WhileStmt(Box::new(cond_expr), body)
 }
 
-FnCallArgs = Comma<Expr>; // (0)
+FnCallArgs = Comma<Expr>;
 FnCall: AstNode = {
     <name:Ident> "(" <maybe_args:FnCallArgs?> ")" => {
         AstNode::FnCall{
@@ -205,6 +301,8 @@ Bool: bool = {
     "true" => true,
     "false" => false,
 }
+
+NoneVal: AstNode = { "None" => AstNode::Term(Term::None) }
 
 Ident: String = {
     // TODO: Don't copy string, leave as reference for better memory usage
@@ -252,6 +350,7 @@ extern {
         "," => Tok::Comma,
         ";" => Tok::Semicolon,
         "==" => Tok::DoubleEquals,
+        "!=" => Tok::NotEqual,
         ">=" => Tok::GreaterThanEqual,
         "<=" => Tok::LessThanEqual,
         "<<" => Tok::ShiftLeft,
@@ -279,6 +378,9 @@ extern {
         "not" => Tok::Not,
         "end" => Tok::End,
         "then" => Tok::Then,
+        "method" => Tok::Method,
+        "do" => Tok::Do,
+        "None" => Tok::None,
         SingleLiteralString => Tok::SingleLiteralString(<&'input str>),
         DoubleLiteralString => Tok::DoubleLiteralString(<&'input str>),
         IdentTok => Tok::Ident(<&'input str>),

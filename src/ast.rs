@@ -5,6 +5,7 @@ pub enum Term {
     Ident(String),
     Str(String),
     Bool(bool),
+    None,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -18,8 +19,21 @@ pub enum Op {
     Shr,
     And,
     Or,
-    Xor,
+    // Xor,
     Exp,
+    Not,
+    GreaterThan,
+    GreaterThanEqual,
+    LessThan,
+    LessThanEqual,
+    Equal,
+    NotEqual,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+    BitwiseNot,
+    Negation,
+    MemberAccess,
 }
 
 // #[derive(Clone, Debug, PartialEq, Eq)]
@@ -39,11 +53,18 @@ pub enum AstNode {
         args: Vec<String>,
         body: Vec<AstNode>,
     },
+    MethodDef {
+        name: String,
+        for_type: String,
+        args: Vec<String>,
+        body: Vec<AstNode>,
+    },
     Term(Term),
-    Arithmetic(Box<AstNode>, Op, Box<AstNode>),
+    Infix(Box<AstNode>, Op, Box<AstNode>),
+    Unary(Op, Box<AstNode>),
     VarDeclaration(Term, Box<AstNode>),
     Assignment(Term, Box<AstNode>),
-    Return(Box<AstNode>),
+    WhileStmt(Box<AstNode>, Vec<AstNode>),
     If {
         cond_expr: Box<AstNode>,
         body: Vec<AstNode>,
@@ -54,4 +75,12 @@ pub enum AstNode {
         cond_expr: Box<AstNode>,
         body: Vec<AstNode>,
     },
+}
+
+pub fn infix(l: AstNode, op: Op, r: AstNode) -> AstNode {
+    AstNode::Infix(Box::new(l), op, Box::new(r))
+}
+
+pub fn unary(op: Op, r: AstNode) -> AstNode {
+    AstNode::Unary(op, Box::new(r))
 }

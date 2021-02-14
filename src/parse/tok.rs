@@ -72,6 +72,9 @@ pub enum Tok<'input> {
     #[token("==")]
     DoubleEquals,
 
+    #[token("!=")]
+    NotEqual,
+
     #[token(">=")]
     GreaterThanEqual,
 
@@ -153,6 +156,15 @@ pub enum Tok<'input> {
     #[token("then")]
     Then,
 
+    #[token("method")]
+    Method,
+
+    #[token("None")]
+    None,
+    
+    #[token("do")]
+    Do,
+
     #[regex(r#"'([^'\\]|\\t|\\u|\\n|\\')*'"#)]
     SingleLiteralString(&'input str),
 
@@ -168,7 +180,7 @@ pub enum Tok<'input> {
     #[regex(r"[\r\n]+")]
     Crlf,
 
-    #[regex(r"//.*(\r|\n)", logos::skip)]
+    #[regex(r"#.*(\r|\n)", logos::skip)]
     Comment,
 
     // Logos requires one token variant to handle errors,

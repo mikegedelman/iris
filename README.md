@@ -2,11 +2,13 @@ Roadmap:
  √ basics: fn calls, fn dec, if/else, prints
  √ higher order functions (pass as arg, return)
  √ closures
- - infix operators :(
+ ⚙ infix operators :(
+ - types
+ - namespacing
+ - multimethods
  - for .. in loops
-   - while loops
-   - option: some/none
-   - multimethods
+   √ while loops
+   √ option: some/none (kind of roughed it in for now)
  - "build" for loops
  - mut
  - pattern matching
@@ -15,6 +17,8 @@ Roadmap:
  - start writing standard library
  - garbage collection
  - structural sharing
+ - imports, namespaces etc
+ - Double type (i32s only supported currently)
 
 An accessible functional-ish programming language. What Python did for procedural, OO programming, I want to do to functional programming.
 
