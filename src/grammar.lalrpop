@@ -18,6 +18,7 @@ Statement: AstNode = {
     <x:Assignment> => x,
     <m:MethodDef> => m,
     <w:WhileStmt> => w,
+    <f:ForStmt> => f,
     // <x:IfStmt> => x,
     <e:Expr> => e,
 }
@@ -273,7 +274,12 @@ IfStmt: AstNode = {
 }
 
 WhileStmt: AstNode = {
-    "while" <cond_expr:Expr> "do" Crlf+ <body:FnBodyStmt*> "end" => AstNode::WhileStmt(Box::new(cond_expr), body)
+    "while" <cond_expr:Expr> "do" Crlf+ <body:FnBodyStmt*> "end" =>
+        AstNode::WhileStmt(Box::new(cond_expr), body)
+}
+ForStmt: AstNode = {
+    "for" <item_var:Ident> "in" <iterable:Expr> "do" Crlf+ <body:FnBodyStmt*> "end" =>
+        AstNode::ForStmt(item_var, Box::new(iterable), body)
 }
 
 FnCallArgs = Comma<Expr>;

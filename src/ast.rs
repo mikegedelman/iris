@@ -65,6 +65,7 @@ pub enum AstNode {
     VarDeclaration(Term, Box<AstNode>),
     Assignment(Term, Box<AstNode>),
     WhileStmt(Box<AstNode>, Vec<AstNode>),
+    ForStmt(String, Box<AstNode>, Vec<AstNode>),
     If {
         cond_expr: Box<AstNode>,
         body: Vec<AstNode>,

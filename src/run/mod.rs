@@ -113,9 +113,32 @@ fn test_bool_val(v: Value) -> bool {
     }
 }
 
+fn declare_var_in(scope: &Rc<RefCell<Scope>>, var: &str, val: Value) {
+    let mut s = scope.borrow_mut();
+    s.declare_var(var, val);
+}
+fn set_var_in(scope: &Rc<RefCell<Scope>>, var: &str, val: Value) {
+    let mut s = scope.borrow_mut();
+    s.set_var(var, val);
+}
+
+fn for_in(item_var: String, in_val: &AstNode, body: &Vec<AstNode>, scope: Rc<RefCell<Scope>>) {
+    let inner_scope = Rc::new(RefCell::new(Scope::nest(scope, "for loop")));
+    let next = fn_call("Iter", &vec![in_val.clone()], Rc::clone(&inner_scope));
+    declare_var_in(&inner_scope, "__next", next);
+    declare_var_in(&inner_scope, &item_var, fn_call("__next", &vec![], Rc::clone(&inner_scope)));
+
+    let is_some_arg = vec![AstNode::Term(Term::Ident(item_var.to_string()))];
+    while test_bool_val(fn_call("is_some", &is_some_arg, Rc::clone(&inner_scope))) {
+        stmt_body(body, Rc::clone(&inner_scope));
+        set_var_in(&inner_scope, &item_var, fn_call("__next", &vec![], Rc::clone(&inner_scope)));
+    }
+}
+
 fn while_stmt(cond_expr: &AstNode, body: &Vec<AstNode>, scope: Rc<RefCell<Scope>>) {
-    while test_bool_val(eval(cond_expr, Rc::clone(&scope))) {
-        stmt_body(body, Rc::clone(&scope));
+    let inner_scope = Rc::new(RefCell::new(Scope::nest(scope, "for loop")));
+    while test_bool_val(eval(cond_expr, Rc::clone(&inner_scope))) {
+        stmt_body(body, Rc::clone(&inner_scope));
     }
 }
 
@@ -221,6 +244,10 @@ fn stmt(ast: &AstNode, scope: Rc<RefCell<Scope>>) -> Value {
         },
         AstNode::WhileStmt(cond, body) => {
             while_stmt(cond, body, Rc::clone(&scope));
+            Value::None
+        },
+        AstNode::ForStmt(iter_var, iterable, body) => {
+            for_in(iter_var.to_string(), iterable, body, Rc::clone(&scope));
             Value::None
         },
         _ => eval(ast, scope),

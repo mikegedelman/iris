@@ -17,12 +17,16 @@ method Iter(xs) for list
   end
 end
 
-let next = Iter([1, 2, 3])
-let item = next()
-while item.is_some() do
-    print(item.unwrap())
-    item = next()
+for i in 329 do
+    print(i)
 end
+
+# let next = Iter([1, 2, 3])
+# let item = next()
+# while item.is_some() do
+#     print(item.unwrap())
+#     item = next()
+# end
 
 # let next = range(5)
 # print(next())
