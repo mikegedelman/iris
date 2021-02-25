@@ -1,13 +1,24 @@
 Roadmap:
+
  √ basics: fn calls, fn dec, if/else, prints
+
  √ higher order functions (pass as arg, return)
+
  √ closures
+
  √ methods
+
  ⚙ infix operators :(
+
  ⚙ types
+
  √ for .. in loops
+
    √ while loops
+
    √ option: some/none (kind of roughed it in for now)
+
+todo:
  - namespacing
  - let mut x = ...
  - pattern matching
